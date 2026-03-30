@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 
+// 🔥 FIREBASE IMPORT
+import { db } from "../firebase";
+import { collection, getDocs } from "firebase/firestore";
+
 function Summary() {
   const [summary, setSummary] = useState({
     totalAdvance: 0,
@@ -13,58 +17,60 @@ function Summary() {
     return num.toLocaleString("en-IN");
   };
 
+  // 🔥 LOAD FROM FIREBASE
   useEffect(() => {
-    calculateSummary();
+    const fetchSummary = async () => {
+      let advanceSum = 0;
+      let balanceSum = 0;
+      let totalSum = 0;
+      let categoryDetails = [];
+
+      try {
+        const querySnapshot = await getDocs(collection(db, "categories"));
+
+        querySnapshot.forEach((docSnap) => {
+          const rows = docSnap.data().rows || [];
+
+          let catAdvance = 0;
+          let catBalance = 0;
+          let catTotal = 0;
+
+          rows.forEach((row) => {
+            const adv = Number(row.advance) || 0;
+            const bal = Number(row.balance) || 0;
+            const tot = Number(row.total) || 0;
+
+            catAdvance += adv;
+            catBalance += bal;
+            catTotal += tot;
+          });
+
+          advanceSum += catAdvance;
+          balanceSum += catBalance;
+          totalSum += catTotal;
+
+          categoryDetails.push({
+            name: docSnap.id,
+            advance: catAdvance,
+            balance: catBalance,
+            total: catTotal
+          });
+        });
+
+        setSummary({
+          totalAdvance: advanceSum,
+          totalBalance: balanceSum,
+          totalPayment: totalSum,
+          categoryData: categoryDetails
+        });
+
+      } catch (error) {
+        console.error("Error fetching summary:", error);
+      }
+    };
+
+    fetchSummary();
   }, []);
-
-  const calculateSummary = () => {
-    let advanceSum = 0;
-    let balanceSum = 0;
-    let totalSum = 0;
-    let categoryDetails = [];
-
-    const categories = JSON.parse(localStorage.getItem("categories")) || [];
-
-    categories.forEach((cat) => {
-      const stored = JSON.parse(localStorage.getItem(cat));
-
-      if (!stored) return;
-
-      const rows = stored?.rows || stored || [];
-
-      let catAdvance = 0;
-      let catBalance = 0;
-      let catTotal = 0;
-
-      rows.forEach((row) => {
-        const adv = Number(row.advance) || 0;
-        const bal = Number(row.balance) || 0;
-        const tot = Number(row.total) || 0;
-
-        catAdvance += adv;
-        catBalance += bal;
-        catTotal += tot;
-      });
-
-      advanceSum += catAdvance;
-      balanceSum += catBalance;
-      totalSum += catTotal;
-
-      categoryDetails.push({
-        name: cat,
-        advance: catAdvance,
-        balance: catBalance,
-        total: catTotal
-      });
-    });
-
-    setSummary({
-      totalAdvance: advanceSum,
-      totalBalance: balanceSum,
-      totalPayment: totalSum,
-      categoryData: categoryDetails
-    });
-  };
 
   return (
     <div style={containerStyle}>
