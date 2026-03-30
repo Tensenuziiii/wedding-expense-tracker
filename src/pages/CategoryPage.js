@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
+// 🔥 FIREBASE IMPORTS
+import { db } from "../firebase";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+
 function CategoryPage() {
   const { name } = useParams();
 
@@ -11,12 +15,22 @@ function CategoryPage() {
     { date: "", head: "", total: "", advance: "", balance: 0 }
   ]);
 
-  // 🔥 LOAD DATA
+  // 🔥 LOAD FROM FIREBASE
   useEffect(() => {
-    const savedData = localStorage.getItem(name);
-    if (savedData) {
-      setRows(JSON.parse(savedData));
-    }
+    const fetchData = async () => {
+      try {
+        const docRef = doc(db, "categories", name);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setRows(docSnap.data().rows);
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+      }
+    };
+
+    fetchData();
   }, [name]);
 
   // ➕ Add Row
@@ -50,10 +64,17 @@ function CategoryPage() {
     setRows(updated);
   };
 
-  // 💾 SAVE DATA
-  const saveData = () => {
-    localStorage.setItem(name, JSON.stringify(rows));
-    alert("Data Saved Successfully ✅");
+  // 💾 SAVE TO FIREBASE
+  const saveData = async () => {
+    try {
+      await setDoc(doc(db, "categories", name), {
+        rows: rows
+      });
+      alert("Saved to database ✅");
+    } catch (error) {
+      console.error("Error saving:", error);
+      alert("Error saving data ❌");
+    }
   };
 
   // 📥 EXPORT TO EXCEL
@@ -102,7 +123,7 @@ function CategoryPage() {
         <thead>
           <tr>
             <th>Sl.No</th>
-            <th>Date</th> {/* 🔥 NEW COLUMN */}
+            <th>Date</th>
             <th>Head of Account</th>
             <th>Total Payment</th>
             <th>Advance Payment</th>
@@ -116,7 +137,6 @@ function CategoryPage() {
             <tr key={index}>
               <td>{index + 1}</td>
 
-              {/* 🔥 DATE INPUT */}
               <td>
                 <input
                   type="date"
