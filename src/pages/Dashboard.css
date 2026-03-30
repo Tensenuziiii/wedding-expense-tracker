@@ -1,0 +1,32 @@
+.dashboard {
+  padding: 20px;
+  text-align: center;
+}
+
+.add-section {
+  margin-bottom: 20px;
+}
+
+.add-section input {
+  padding: 8px;
+  margin-right: 10px;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card {
+  background: #f4c542;
+  margin: 10px;
+  padding: 20px;
+  border-radius: 10px;
+  width: 150px;
+  cursor: pointer;
+}
+
+.card button {
+  margin-top: 10px;
+}
